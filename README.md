@@ -21,7 +21,7 @@ Credentials:
 
 ## Options
 
-(correct as of 2019-11-02)
+(correct as of 2019-08-02)
 
 ```
 usage: wasg-register.py [-h] [-I {test,starhub,myrepublic,singtel}]
