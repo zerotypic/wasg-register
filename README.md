@@ -7,6 +7,13 @@ registration protocol.
 Please see [this article](https://medium.com/@zerotypic/making-wireless-sgx-work-on-linux-92216c66fdb7)
 for more information.
 
+## Dependencies
+
+```
+pip install pycrypto
+pip install requests
+```
+
 ## Basic Usage
 
 ```
