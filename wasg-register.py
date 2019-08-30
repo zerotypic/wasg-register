@@ -35,28 +35,56 @@ DEFAULT_TRANSID = "053786654500000000000000"
 
 VERBOSE = False
 
+# Result Codes
+RC_SUCCESS = 1100
+
+
 class Exn(Exception): pass
 class HTTPNotFoundExn(Exn): pass
 class MalformedResponseExn(Exn): pass
+class ServerErrorExn(Exn): pass
+
+def errprint(m): sys.stderr.write(m + os.linesep)
 
 def LOG(m):
-    if VERBOSE:
-        sys.stderr.write(m + os.linesep)
-    #endif
+    if VERBOSE: errprint(m)
 #enddef
 
 # Helper function to validate server responses.
 def _validate(resp, key, val=None, fatal=False):
     def _raise(m): raise MalformedResponseExn(m)
-    err = print if not fatal else _raise
+    err = lambda m: errprint("Warning: " + m) \
+          if not fatal else _raise
     if not key in resp:
-        err("Warning: Server response did not contain key '%s'." % (key,))
+        LOG("Invalid server response: %s" % (repr(resp),))
+        err("Server response did not contain key '%s'." % (key,))
     elif val != None and resp[key] != val:
-        err("Warning: Unexpected server response, key '%s' is '%s', not '%s'." \
+        LOG("Invalid server response: %s" % (repr(resp),))
+        err("Unexpected server response, key '%s' is '%s', not '%s'." \
             % (key, resp[key], val))
         #endif
     #endif
 #enddef
+
+# Checks if the response is an error message. If so, print it out and bail.
+def _check_for_error(resp):
+
+    _validate(resp, "status", fatal=True)
+    _validate(resp["status"], "resultcode", fatal=True)
+    rc = int(resp["status"]["resultcode"])
+
+    if rc != RC_SUCCESS:
+        LOG("Server response reports an error, resultcode = %d" % (rc,))
+        _validate(resp, "body", fatal=True)
+
+        msg = resp["body"]["message"] \
+              if "message" in resp["body"] else "(empty)"
+        LOG("Received error message from server: %s" % (msg,))
+        raise ServerErrorExn(msg)
+
+    #endif
+#enddef
+
 
 def request_registration(isp,
                          salutation, name, uid, mobile,
@@ -82,11 +110,13 @@ def request_registration(isp,
     try:
         resp = r.json()
     except ValueError:
-        raise MalformedResponseExn("Malformed response from server.")
+        raise MalformedResponseExn("Could not parse JSON.")
     #endtry
 
+    _check_for_error(resp)
     _validate(resp, "api", "create_user_r1a")
     _validate(resp, "version", "2.1")
+
     _validate(resp, "body", fatal=True)
     _validate(resp["body"], "success_code", fatal=True)
 
@@ -116,6 +146,7 @@ def validate_otp(isp, uid, mobile, otp, success_code, transid):
         raise MalformedResponseExn("Malformed response from server.")
     #endtry
 
+    _check_for_error(resp)
     _validate(resp, "api", "create_user_r1b")
     _validate(resp, "version", "2.3")
     _validate(resp, "body", fatal=True)
@@ -144,7 +175,7 @@ def decrypt(key, ciphertext):
 #enddef
 
 def errquit(m):
-    LOG("Error: " + m)
+    errprint("Error: " + m)
     return 1
 #enddef
 
@@ -307,4 +338,17 @@ def main():
     
 #enddef
 
-if __name__ == "__main__": sys.exit(main())
+if __name__ == "__main__":
+    try:
+        sys.exit(main())
+    except HTTPNotFoundExn as e:
+        errprint("HTTP error: %s" % (e.message,))
+        sys.exit(1)
+    except MalformedResponseExn as e:
+        errpint("Malformed response from server: %s" % (e.message,))
+        sys.exit(1)
+    except ServerErrorExn as e:
+        errprint("Server responded with error message: %s" % (e.message,))
+        sys.exit(1)
+    #endtry
+#endif
