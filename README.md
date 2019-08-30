@@ -7,6 +7,25 @@ registration protocol.
 Please see [this article](https://medium.com/@zerotypic/making-wireless-sgx-work-on-linux-92216c66fdb7)
 for more information.
 
+## User ID Requirement
+
+Currently, this script can probably only be used by Singapore citizens, as it
+requires a valid NRIC number; the server appears to validate the NRIC and
+complains if it is wrong.
+
+However, it should be possible to register a Wireless@SGx account using a
+passport number. This has not been tested extensively, and it might
+require the use of a different set of APIs. If you manage to successfully
+register using a passport number, please let us know.
+
+It also appears possible to register for an account using just a mobile
+phone number and a date of birth. Future versions might support doing
+this.
+
+Note: It is possible to generate a valid NRIC number and use that to
+register. Please *DO NOT DO THIS*, as it might result in the invalidation
+of the account of the person that NRIC actually belongs to.
+
 ## Dependencies
 
 ```
