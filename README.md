@@ -7,6 +7,8 @@ registration protocol.
 Please see [this article](https://medium.com/@zerotypic/making-wireless-sgx-work-on-linux-92216c66fdb7)
 for more information.
 
+## NOTICE: wasg-register doesn't seem to be working right now due to changes to the API.
+
 ## User ID Requirement
 
 Currently, this script can probably only be used by Singapore citizens, as it
