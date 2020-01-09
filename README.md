@@ -25,7 +25,7 @@ of birth pair will be used to uniquely identify a user account.
 
 ```
 # To use: ./wasg-register.py <mobile number> <dob>
-$ ./wasg-register.py 659XXXXXXX SXXXXXXXX
+$ ./wasg-register.py 659XXXXXXX 24031980
 OTP will be sent to mobile phone number 659XXXXXXX
 Enter OTP to continue: XXXXXX
 Credentials:
@@ -39,7 +39,7 @@ date of birth pair, you can request for a new set of credentials using
 *retrieve mode*:
 
 ```
-$ ./wasg-register.py -r 659XXXXXXX SXXXXXXXX
+$ ./wasg-register.py -r 659XXXXXXX 24031980
 OTP will be sent to mobile phone number 659XXXXXXX
 Enter OTP to continue: XXXXXX
 Credentials:
@@ -100,7 +100,7 @@ optional arguments:
 
 ## Credits
 
-Thanks to Zamiel Chia (IkaEren) for reversing the new API and password
+Thanks to Zamiel Chia (@IkaEren) for reversing the new API and password
 decryption routine.
 
 ## License
