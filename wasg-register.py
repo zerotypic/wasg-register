@@ -20,9 +20,10 @@ from Crypto.Cipher import AES
 # ISP URLs were taken from WSG.Common.dll
 # Test URL is for debugging.
 ISP_ESSA_URLS = {
-    "singtel" : "https://singtel-wsg.singtel.com/essa",
-    "starhub" : "https://api.wifi.starhub.net.sg/essa",
-    "myrepublic" : "https://wireless-sg-app.myrepublic.net/essa",
+    "singtel" : "https://singtel-wsg.singtel.com/essa_r11",
+    # Disabling StarHub because it seems like it requires an API password.
+    # "starhub" : "https://api.wifi.starhub.net.sg/essa_r11",
+    "myrepublic" : "https://wireless-sg-app.myrepublic.net/essa_r11",
     "test" : "http://localhost:8080/essa",
 }
 DEFAULT_ISP="singtel"
@@ -56,10 +57,10 @@ def _validate(resp, key, val=None, fatal=False):
     err = lambda m: errprint("Warning: " + m) \
           if not fatal else _raise
     if not key in resp:
-        LOG("Invalid server response: %s" % (repr(resp),))
-        err("Server response did not contain key '%s'." % (key,))
+        LOG("Invalid server response: %s" % repr(resp))
+        err("Server response did not contain key '%s'." % key)
     elif val != None and resp[key] != val:
-        LOG("Invalid server response: %s" % (repr(resp),))
+        LOG("Invalid server response: %s" % repr(resp))
         err("Unexpected server response, key '%s' is '%s', not '%s'." \
             % (key, resp[key], val))
         #endif
@@ -74,12 +75,12 @@ def _check_for_error(resp):
     rc = int(resp["status"]["resultcode"])
 
     if rc != RC_SUCCESS:
-        LOG("Server response reports an error, resultcode = %d" % (rc,))
+        LOG("Server response reports an error, resultcode = %d" % rc)
         _validate(resp, "body", fatal=True)
 
         msg = resp["body"]["message"] \
               if "message" in resp["body"] else "(empty)"
-        LOG("Received error message from server: %s" % (msg,))
+        LOG("Received error message from server: %s" % msg)
         raise ServerErrorExn(msg)
 
     #endif
@@ -87,18 +88,27 @@ def _check_for_error(resp):
 
 
 def request_registration(isp,
-                         salutation, name, uid, mobile,
-                         country, dob, email, transid):
+                         salutation, name, gender, dob, mobile,
+                         country, email, transid,
+                         retrieve_mode=False):
 
+    if retrieve_mode:
+        api = "retrieve_user_r11x2a"
+        api_version = "1.6"
+    else:
+        api = "create_user_r11x1a"
+        api_version = "2.3"
+    #endif
+    
     r = requests.get(ISP_ESSA_URLS[isp],
                      params={
-                         "api" : "create_user_r1a",
+                         "api" : api,
                          "salutation" : salutation,
                          "name" : name,
-                         "uid" : uid,
+                         "gender" : gender,
+                         "dob" : dob,
                          "mobile" : mobile,
                          "nationality" : country,
-                         "dob" : dob,
                          "email" : email,
                          "tid" : transid,
                      })
@@ -114,8 +124,8 @@ def request_registration(isp,
     #endtry
 
     _check_for_error(resp)
-    _validate(resp, "api", "create_user_r1a")
-    _validate(resp, "version", "2.1")
+    _validate(resp, "api", api)
+    _validate(resp, "version", api_version)
 
     _validate(resp, "body", fatal=True)
     _validate(resp["body"], "success_code", fatal=True)
@@ -124,12 +134,21 @@ def request_registration(isp,
 
 #enddef
 
-def validate_otp(isp, uid, mobile, otp, success_code, transid):
+def validate_otp(isp, dob, mobile, otp, success_code, transid,
+                 retrieve_mode=False):
 
+    if retrieve_mode:
+        api = "retrieve_user_r11x2b"
+        api_version = "2.2"
+    else:
+        api = "create_user_r11x1b"
+        api_version = "2.4"
+    #endif
+    
     r = requests.get(ISP_ESSA_URLS[isp],
                      params={
-                         "api" : "create_user_r1b",
-                         "uid" : uid,
+                         "api" : api,
+                         "dob" : dob,
                          "mobile" : mobile,
                          "otp" : otp,
                          "success_code" : success_code,
@@ -147,31 +166,38 @@ def validate_otp(isp, uid, mobile, otp, success_code, transid):
     #endtry
 
     _check_for_error(resp)
-    _validate(resp, "api", "create_user_r1b")
-    _validate(resp, "version", "2.3")
+    _validate(resp, "api", api)
+    _validate(resp, "version", api_version)
     _validate(resp, "body", fatal=True)
     _validate(resp["body"], "userid", fatal=True)
     _validate(resp["body"], "enc_userid", fatal=True)
+    _validate(resp["body"], "tag_userid", fatal=True)
     _validate(resp["body"], "enc_password", fatal=True)
+    _validate(resp["body"], "tag_password", fatal=True)
+    _validate(resp["body"], "iv", fatal=True)
 
-    return (str(resp["body"]["userid"]),
-            str(resp["body"]["enc_userid"]),
-            str(resp["body"]["enc_password"]))
+    return {
+        "userid" : str(resp["body"]["userid"]),
+        "enc_userid" : str(resp["body"]["enc_userid"].decode("hex")),
+        "tag_userid" : str(resp["body"]["tag_userid"].decode("hex")),
+        "enc_password" : str(resp["body"]["enc_password"].decode("hex")),
+        "tag_password" : str(resp["body"]["tag_password"].decode("hex")),
+        "nonce" : str(resp["body"]["iv"])
+    }
     
 #enddef
 
 def build_decrypt_key(date, transid, otp):
-    date_hex = "%03x" % (int(date.strftime("%e%m").strip()),)
-    otp_hex = "%05x" % (int(otp),)
+    date_hex = "%03x" % int(date.strftime("%e%m").strip())
+    otp_hex = "%05x" % int(otp)
     key_hex = date_hex + transid + otp_hex
     return key_hex.decode("hex")
 #enddef
 
-def decrypt(key, ciphertext):
-    aes = AES.AESCipher(key)
-    pt = aes.decrypt(ciphertext)
-    # Remove PKCS#7 padding.
-    return pt[:-ord(pt[-1])]
+def decrypt(key, nonce, tag, ciphertext):
+    aes = AES.new(key, AES.MODE_CCM, nonce)
+    aes.update(tag)
+    return aes.decrypt(ciphertext)
 #enddef
 
 def errquit(m):
@@ -188,9 +214,9 @@ def main():
     parser.add_argument("mobile",
                         type=str,
                         help="Mobile phone number")
-    parser.add_argument("nric",
+    parser.add_argument("dob",
                         type=str,
-                        help="NRIC or equivalent ID number")
+                        help="Date of birth in DDMMYYYY format")
 
     parser.add_argument("-I", "--isp",
                         type=str,
@@ -208,15 +234,15 @@ def main():
                         default="Some Person",
                         help="Full name")
 
+    parser.add_argument("-g", "--gender",
+                        type=str,
+                        default="f",
+                        help="Gender")
+    
     parser.add_argument("-c", "--country",
                         type=str,
                         default="SG",
                         help="Nationality country code")
-
-    parser.add_argument("-d", "--dob",
-                        type=str,
-                        default="1990-01-01",
-                        help="Date of Birth")
 
     parser.add_argument("-e", "--email",
                         type=str,
@@ -244,6 +270,10 @@ def main():
                         type=str,
                         help="Date the OTP was generated, for use in decryption, in YYMMDD format.")
 
+    parser.add_argument("-r", "--retrieve-mode",
+                        action="store_true",
+                        help="Run in retrieve mode, for existing accounts.")
+    
     parser.add_argument("-v", "--verbose",
                         action="store_true",
                         help="Be verbose.")
@@ -263,21 +293,22 @@ def main():
             args.isp,
             args.salutation,
             args.name,
-            args.nric,
+            args.gender,
+            args.dob,
             args.mobile,
             args.country,
-            args.dob,
             args.email,
-            args.transid)
+            args.transid,
+            retrieve_mode=args.retrieve_mode)
 
-        LOG("Got success code: %s" % (success_code,))
+        LOG("Got success code: %s" % success_code)
 
         if args.registration_phase_only:
-            print("Success code: %s" % (success_code,))
+            print("Success code: %s" % success_code)
             return 0
         #endif
 
-        print("OTP will be sent to mobile phone number %s" % (args.mobile,))
+        print("OTP will be sent to mobile phone number %s" % args.mobile)
         otp = input("Enter OTP to continue: ")
 
     else:
@@ -291,16 +322,14 @@ def main():
 
     #endif
         
-    (userid, enc_userid_hex, enc_password_hex) = validate_otp(
+    r = validate_otp(
         args.isp,
-        args.nric,
+        args.dob,
         args.mobile,
         otp,
         success_code,
-        args.transid)
-
-    enc_userid = enc_userid_hex.decode("hex")
-    enc_password = enc_password_hex.decode("hex")
+        args.transid,
+        retrieve_mode=args.retrieve_mode)
     
     if args.decryption_date != None:
         decryption_date = datetime.datetime.strptime(args.decryption_date, "%Y%m%d")
@@ -315,8 +344,8 @@ def main():
     found = False
     for date in try_dates:
         key = build_decrypt_key(date, args.transid, otp)
-        if decrypt(key, enc_userid) == userid:
-            LOG("Successfully decrypted using date %s." % (date.strftime("%Y%m%d"),))
+        if decrypt(key, r["nonce"], r["tag_userid"], r["enc_userid"]) == r["userid"]:
+            LOG("Successfully decrypted using date %s." % date.strftime("%Y%m%d"))
             found = True
             break
         #endif
@@ -326,13 +355,16 @@ def main():
         return errquit("Decryption failed. Try a different date?")
     #endif
 
-    LOG("Decryption key: %s" % (key.encode("hex"),))
+    LOG("Decryption key: %s" % key.encode("hex"))
+    LOG("Nonce: %s" % r["nonce"])
+    LOG("userid tag: %s" % r["tag_userid"].encode("hex"))
+    LOG("password tag: %s" % r["tag_password"].encode("hex"))
 
-    password = decrypt(key, enc_password)
+    password = decrypt(key, r["nonce"], r["tag_password"], r["enc_password"])
 
     print("Credentials:")
-    print("\tuserid = %s" % (repr(userid),))
-    print("\tpassword = %s" % (repr(password),))
+    print("\tuserid = %s" % repr(r["userid"]))
+    print("\tpassword = %s" % repr(password))
         
     return 0
     
@@ -342,13 +374,13 @@ if __name__ == "__main__":
     try:
         sys.exit(main())
     except HTTPNotFoundExn as e:
-        errprint("HTTP error: %s" % (e.message,))
+        errprint("HTTP error: %s" % e.message)
         sys.exit(1)
     except MalformedResponseExn as e:
-        errpint("Malformed response from server: %s" % (e.message,))
+        errpint("Malformed response from server: %s" % e.message)
         sys.exit(1)
     except ServerErrorExn as e:
-        errprint("Server responded with error message: %s" % (e.message,))
+        errprint("Server responded with error message: %s" % e.message)
         sys.exit(1)
     #endtry
 #endif
