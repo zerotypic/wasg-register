@@ -1,12 +1,10 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #
 # wasg-register : Registers for a new Wireless@SG SSA account
 #
 # Python equivalent of the Wireless@SG app available at:
 #    https://www2.imda.gov.sg/programme-listing/wireless-at-sg/Wireless-at-SG-for-Consumers
 #
-
-from __future__ import print_function
 
 import sys
 import os
@@ -19,20 +17,26 @@ from Crypto.Cipher import AES
 
 # ISP URLs were taken from WSG.Common.dll
 # Test URL is for debugging.
-ISP_ESSA_URLS = {
-    "singtel" : "https://singtel-wsg.singtel.com/essa_r11",
-    # Disabling StarHub because it seems like it requires an API password.
-    # "starhub" : "https://api.wifi.starhub.net.sg/essa_r11",
-    "myrepublic" : "https://wireless-sg-app.myrepublic.net/essa_r11",
-    "test" : "http://localhost:8080/essa",
+ISP_CONFIG = {
+    "singtel" : {
+        "essa_url" : "https://singtel-wsg.singtel.com/essa_r11",
+        "create_api_versions" : ("2.4", "2.4"),
+        "retrieve_api_versions" : ("1.7", "2.2")
+    },
+    "myrepublic" : {
+        "essa_url" : "https://wireless-sg-app.myrepublic.net/essa_r11",
+        "create_api_versions" : ("2.3", "2.4"),
+        "retrieve_api_versions" : ("1.6", "2.2")
+    },
 }
+
 DEFAULT_ISP="singtel"
 
 # The transaction ID (transid) appears to be created from the WiFi
 # interface's GUID in Windows, which is probably based on the MAC
 # address. The below transid was found within WSG.Common.dll, and is used
 # when there is no "DeviceManager" available. It seems to work fine.
-DEFAULT_TRANSID = "053786654500000000000000"
+DEFAULT_TRANSID = b"053786654500000000000000"
 
 VERBOSE = False
 
@@ -94,13 +98,13 @@ def request_registration(isp,
 
     if retrieve_mode:
         api = "retrieve_user_r11x2a"
-        api_version = "1.6"
+        api_version = ISP_CONFIG[isp]["retrieve_api_versions"][0]
     else:
         api = "create_user_r11x1a"
-        api_version = "2.3"
+        api_version = ISP_CONFIG[isp]["create_api_versions"][0]
     #endif
     
-    r = requests.get(ISP_ESSA_URLS[isp],
+    r = requests.get(ISP_CONFIG[isp]["essa_url"],
                      params={
                          "api" : api,
                          "salutation" : salutation,
@@ -139,13 +143,13 @@ def validate_otp(isp, dob, mobile, otp, success_code, transid,
 
     if retrieve_mode:
         api = "retrieve_user_r11x2b"
-        api_version = "2.2"
+        api_version = ISP_CONFIG[isp]["retrieve_api_versions"][1]
     else:
         api = "create_user_r11x1b"
-        api_version = "2.4"
+        api_version = ISP_CONFIG[isp]["create_api_versions"][1]
     #endif
     
-    r = requests.get(ISP_ESSA_URLS[isp],
+    r = requests.get(ISP_CONFIG[isp]["essa_url"],
                      params={
                          "api" : api,
                          "dob" : dob,
@@ -176,22 +180,26 @@ def validate_otp(isp, dob, mobile, otp, success_code, transid,
     _validate(resp["body"], "tag_password", fatal=True)
     _validate(resp["body"], "iv", fatal=True)
 
+    def hexdecode(s):
+        return codecs.decode(bytes(s, "utf8"), encoding="hex")
+    #enddef
+    
     return {
-        "userid" : str(resp["body"]["userid"]),
-        "enc_userid" : str(resp["body"]["enc_userid"].decode("hex")),
-        "tag_userid" : str(resp["body"]["tag_userid"].decode("hex")),
-        "enc_password" : str(resp["body"]["enc_password"].decode("hex")),
-        "tag_password" : str(resp["body"]["tag_password"].decode("hex")),
-        "nonce" : str(resp["body"]["iv"])
+        "userid" : bytes(resp["body"]["userid"], "utf8"),
+        "enc_userid" : hexdecode(resp["body"]["enc_userid"]),
+        "tag_userid" : hexdecode(resp["body"]["tag_userid"]),
+        "enc_password" : hexdecode(resp["body"]["enc_password"]),
+        "tag_password" : hexdecode(resp["body"]["tag_password"]),
+        "nonce" : bytes(resp["body"]["iv"], "utf8")
     }
     
 #enddef
 
 def build_decrypt_key(date, transid, otp):
-    date_hex = "%03x" % int(date.strftime("%e%m").strip())
-    otp_hex = "%05x" % int(otp)
+    date_hex = b"%03x" % int(date.strftime("%e%m").strip())
+    otp_hex = b"%05x" % int(otp)
     key_hex = date_hex + transid + otp_hex
-    return key_hex.decode("hex")
+    return codecs.decode(key_hex, "hex")
 #enddef
 
 def decrypt(key, nonce, tag, ciphertext):
@@ -220,7 +228,7 @@ def main():
 
     parser.add_argument("-I", "--isp",
                         type=str,
-                        choices=ISP_ESSA_URLS.keys(),
+                        choices=ISP_CONFIG.keys(),
                         default=DEFAULT_ISP,
                         help="ISP to register with")
     
@@ -250,7 +258,7 @@ def main():
                         help="Email address")
 
     parser.add_argument("-t", "--transid",
-                        type=str,
+                        type=bytes,
                         default=DEFAULT_TRANSID,
                         help="Transaction ID")
 
@@ -355,16 +363,16 @@ def main():
         return errquit("Decryption failed. Try a different date?")
     #endif
 
-    LOG("Decryption key: %s" % key.encode("hex"))
+    LOG("Decryption key: %s" % codecs.encode(key, "hex"))
     LOG("Nonce: %s" % r["nonce"])
-    LOG("userid tag: %s" % r["tag_userid"].encode("hex"))
-    LOG("password tag: %s" % r["tag_password"].encode("hex"))
+    LOG("userid tag: %s" % codecs.encode(r["tag_userid"], "hex"))
+    LOG("password tag: %s" % codecs.encode(r["tag_password"], "hex"))
 
     password = decrypt(key, r["nonce"], r["tag_password"], r["enc_password"])
 
     print("Credentials:")
-    print("\tuserid = %s" % repr(r["userid"]))
-    print("\tpassword = %s" % repr(password))
+    print("\tuserid = %s" % r["userid"].decode())
+    print("\tpassword = %s" % password.decode())
         
     return 0
     
