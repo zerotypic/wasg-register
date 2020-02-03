@@ -47,6 +47,23 @@ Credentials:
  password = 'XXX'
 ```
 
+### Docker
+
+You can use Docker to build an image with all the dependencies included.
+
+```
+# Build
+$ docker build -t wasg-register .
+
+# Register mode
+$ docker run -it --rm wasg-register 659XXXXXXX 24031980
+[snip]
+
+# Retrieve mode
+$ docker run -it --rm wasg-register -r 659XXXXXXX 24031980
+[snip]
+```
+
 ## Options
 
 (correct as of 2020-01-09)
