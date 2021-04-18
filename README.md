@@ -115,6 +115,20 @@ optional arguments:
   -v, --verbose         Be verbose.
 ```
 
+## Configuration Tips
+
+Koo Zhengqun supplied a `wpa_supplicant.conf` configuration for Wireless@SGx that works in Void Linux:
+
+```
+network={
+        ssid="Wireless@SGx"
+        key_mgmt=WPA-EAP
+        eap=PEAP
+        identity="<userid>"
+        password="<password>"
+}
+```
+
 ## Credits
 
 Thanks to Zamiel Chia (@IkaEren) for reversing the new API and password
