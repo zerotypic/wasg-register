@@ -120,7 +120,7 @@ def request_registration(isp,
                      })
 
     if r.status_code != requests.codes.ok:
-        raise HTTPNotFoundExn("Failed to make request query.")
+        raise HTTPNotFoundExn("Failed to make request query, status code: {}".format(r.status_code))
     #endif
     
     try:
@@ -162,7 +162,7 @@ def validate_otp(isp, dob, mobile, otp, success_code, transid,
                      })
 
     if r.status_code != requests.codes.ok:
-        raise HTTPNotFoundExn("Failed to make validation query.")
+        raise HTTPNotFoundExn("Failed to make validation query, status code: {}".format(r.status_code))
     #endif
     
     try:
