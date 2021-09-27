@@ -44,7 +44,9 @@ VERBOSE = False
 RC_SUCCESS = 1100
 
 
-class Exn(Exception): pass
+class Exn(Exception):
+    def __init__(self, m): self.message = m
+#endclass
 class HTTPNotFoundExn(Exn): pass
 class MalformedResponseExn(Exn): pass
 class ServerErrorExn(Exn): pass
