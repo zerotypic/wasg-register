@@ -47,6 +47,23 @@ Credentials:
  password = 'XXX'
 ```
 
+### Docker
+
+You can use Docker to build an image with all the dependencies included.
+
+```
+# Build
+$ docker build -t wasg-register .
+
+# Register mode
+$ docker run -it --rm wasg-register 659XXXXXXX 24031980
+[snip]
+
+# Retrieve mode
+$ docker run -it --rm wasg-register -r 659XXXXXXX 24031980
+[snip]
+```
+
 ## Options
 
 (correct as of 2020-01-09)
@@ -96,6 +113,20 @@ optional arguments:
                         YYMMDD format.
   -r, --retrieve-mode   Run in retrieve mode, for existing accounts.
   -v, --verbose         Be verbose.
+```
+
+## Configuration Tips
+
+Koo Zhengqun supplied a `wpa_supplicant.conf` configuration for Wireless@SGx that works in Void Linux:
+
+```
+network={
+        ssid="Wireless@SGx"
+        key_mgmt=WPA-EAP
+        eap=PEAP
+        identity="<userid>"
+        password="<password>"
+}
 ```
 
 ## Credits
