@@ -19,12 +19,12 @@ from Crypto.Cipher import AES
 # Test URL is for debugging.
 ISP_CONFIG = {
     "singtel" : {
-        "essa_url" : "https://singtel-wsg.singtel.com/essa_r11",
+        "essa_url" : "https://singtel-wsg.singtel.com/essa_r12",
         "create_api_versions" : ("2.4", "2.4"),
         "retrieve_api_versions" : ("1.7", "2.2")
     },
     "myrepublic" : {
-        "essa_url" : "https://wireless-sg-app.myrepublic.net/essa_r11",
+        "essa_url" : "https://wireless-sg-app.myrepublic.net/essa_r12",
         "create_api_versions" : ("2.3", "2.4"),
         "retrieve_api_versions" : ("1.6", "2.2")
     },
@@ -99,10 +99,10 @@ def request_registration(isp,
                          retrieve_mode=False):
 
     if retrieve_mode:
-        api = "retrieve_user_r11x2a"
+        api = "retrieve_user_r12x2a"
         api_version = ISP_CONFIG[isp]["retrieve_api_versions"][0]
     else:
-        api = "create_user_r11x1a"
+        api = "create_user_r12x1a"
         api_version = ISP_CONFIG[isp]["create_api_versions"][0]
     #endif
     
@@ -144,10 +144,10 @@ def validate_otp(isp, dob, mobile, otp, success_code, transid,
                  retrieve_mode=False):
 
     if retrieve_mode:
-        api = "retrieve_user_r11x2b"
+        api = "retrieve_user_r12x2b"
         api_version = ISP_CONFIG[isp]["retrieve_api_versions"][1]
     else:
-        api = "create_user_r11x1b"
+        api = "create_user_r12x1b"
         api_version = ISP_CONFIG[isp]["create_api_versions"][1]
     #endif
     
