@@ -21,7 +21,7 @@ ISP_CONFIG = {
     "singtel" : {
         "essa_url" : "https://singtel-wsg.singtel.com/essa_r12",
         "create_api_versions" : ("2.4", "2.4"),
-        "retrieve_api_versions" : ("1.7", "2.2")
+        "retrieve_api_versions" : ("2.0", "2.6")
     },
     "myrepublic" : {
         "essa_url" : "https://wireless-sg-app.myrepublic.net/essa_r12",
