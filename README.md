@@ -133,7 +133,7 @@ network={
 
 ### NetworkManager
 
-@chuanhao01 supplied a `.nmconnection`(NetworkManager) configuartion for Wireless@SGx that works in Archlinux:
+[@chuanhao01](https://github.com/chuanhao01) supplied a `<an id/name>.nmconnection`(NetworkManager) configuartion for Wireless@SGx that works in Archlinux:
 ```
 [wifi-security]
 key-mgmt=wpa-eap
