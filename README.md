@@ -117,6 +117,8 @@ optional arguments:
 
 ## Configuration Tips
 
+### WPA Supplicant
+
 Koo Zhengqun supplied a `wpa_supplicant.conf` configuration for Wireless@SGx that works in Void Linux:
 
 ```
@@ -128,6 +130,41 @@ network={
         password="<password>"
 }
 ```
+
+### NetworkManager
+
+@chuanhao01 supplied a `.nmconnection`(NetworkManager) configuartion for Wireless@SGx that works in Archlinux:
+```
+[wifi-security]
+key-mgmt=wpa-eap
+
+[connection]
+id=<an id/name>
+uuid=<valid UUID>
+type=wifi
+
+[wifi]
+mode=infrastructure
+ssid=Wireless@SGx
+security=802-11-wireless-security
+
+[802-1x]
+eap=peap
+phase2-auth=mschapv2
+identity=<userid>
+password=<password>
+
+[ipv4]
+method=auto
+
+[ipv6]
+addr-gen-mode=stable-privacy
+method=auto
+
+[proxy]
+```
+
+Credit and more instructions can be found [here](https://github.com/wylermr/NetworkManager-WPA2-Enterprise-Setup).
 
 ## Credits
 
