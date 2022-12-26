@@ -20,13 +20,8 @@ from Crypto.Cipher import AES
 ISP_CONFIG = {
     "singtel" : {
         "essa_url" : "https://singtel-wsg.singtel.com/essa_r12",
-        "create_api_versions" : ("2.4", "2.4"),
+        "create_api_versions" : ("2.6", "2.8"),
         "retrieve_api_versions" : ("2.0", "2.6")
-    },
-    "myrepublic" : {
-        "essa_url" : "https://wireless-sg-app.myrepublic.net/essa_r12",
-        "create_api_versions" : ("2.3", "2.4"),
-        "retrieve_api_versions" : ("1.6", "2.2")
     },
 }
 
