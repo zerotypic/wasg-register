@@ -20,6 +20,14 @@ from Crypto.Cipher import AES
 ISP_CONFIG = {
     "singtel" : {
         "essa_url" : "https://singtel-wsg.singtel.com/essa_r12",
+        "api_password" : "",
+        "create_api_versions" : ("2.6", "2.8"),
+        "retrieve_api_versions" : ("2.0", "2.6")
+    },
+
+    "starhub" : {
+        "essa_url" : "https://api.wifi.starhub.net.sg/essa_r12",
+        "api_password" : "5t4rHUB4p1",
         "create_api_versions" : ("2.6", "2.8"),
         "retrieve_api_versions" : ("2.0", "2.6")
     },
@@ -93,6 +101,8 @@ def request_registration(isp,
                          country, email, transid,
                          retrieve_mode=False):
 
+    api_password = ISP_CONFIG[isp]["api_password"]
+
     if retrieve_mode:
         api = "retrieve_user_r12x2a"
         api_version = ISP_CONFIG[isp]["retrieve_api_versions"][0]
@@ -104,6 +114,7 @@ def request_registration(isp,
     r = requests.get(ISP_CONFIG[isp]["essa_url"],
                      params={
                          "api" : api,
+                         "api_password" : api_password,
                          "salutation" : salutation,
                          "name" : name,
                          "gender" : gender,
@@ -138,6 +149,8 @@ def request_registration(isp,
 def validate_otp(isp, dob, mobile, otp, success_code, transid,
                  retrieve_mode=False):
 
+    api_password = ISP_CONFIG[isp]["api_password"]
+
     if retrieve_mode:
         api = "retrieve_user_r12x2b"
         api_version = ISP_CONFIG[isp]["retrieve_api_versions"][1]
@@ -149,6 +162,7 @@ def validate_otp(isp, dob, mobile, otp, success_code, transid,
     r = requests.get(ISP_CONFIG[isp]["essa_url"],
                      params={
                          "api" : api,
+                         "api_password" : api_password,
                          "dob" : dob,
                          "mobile" : mobile,
                          "otp" : otp,
