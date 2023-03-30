@@ -11,8 +11,7 @@ changes since it was written).
 ## Dependencies
 
 ```
-pip install pycryptodome
-pip install requests
+python3 -m pip install pycryptodome requests
 ```
 
 Note: Requires a version of pycryptodome that supports AES in CCM mode.
@@ -24,8 +23,8 @@ an OTP will be sent via SMS) and a date of birth. A mobile number / date
 of birth pair will be used to uniquely identify a user account.
 
 ```
-# To use: ./wasg-register.py <mobile number> <dob>
-$ ./wasg-register.py 659XXXXXXX 24031980
+# To use: python3 wasg-register.py <mobile number> <dob>
+$ python3 wasg-register.py 659XXXXXXX 24031980
 OTP will be sent to mobile phone number 659XXXXXXX
 Enter OTP to continue: XXXXXX
 Credentials:
@@ -39,7 +38,7 @@ date of birth pair, you can request for a new set of credentials using
 *retrieve mode*:
 
 ```
-$ ./wasg-register.py -r 659XXXXXXX 24031980
+$ python3 wasg-register.py -r 659XXXXXXX 24031980
 OTP will be sent to mobile phone number 659XXXXXXX
 Enter OTP to continue: XXXXXX
 Credentials:

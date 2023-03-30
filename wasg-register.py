@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 #
 # wasg-register : Registers for a new Wireless@SG SSA account
 #
