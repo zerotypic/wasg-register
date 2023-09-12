@@ -382,9 +382,11 @@ def main():
     password = decrypt(key, r["nonce"], r["tag_password"], r["enc_password"])
 
     print("Credentials:")
-    print("\tuserid = %s" % r["userid"].decode())
+    print("\tssid = Wireless@SGx")
+    print("\teap = PEAP")
+    print("\tphase2-auth = MSCHAPv2")
+    print("\tidentity = %s" % r["userid"].decode())
     print("\tpassword = %s" % password.decode())
-        
     return 0
     
 #enddef
@@ -396,10 +398,11 @@ if __name__ == "__main__":
         errprint("HTTP error: %s" % e.message)
         sys.exit(1)
     except MalformedResponseExn as e:
-        errpint("Malformed response from server: %s" % e.message)
+        errprint("Malformed response from server: %s" % e.message)
         sys.exit(1)
     except ServerErrorExn as e:
         errprint("Server responded with error message: %s" % e.message)
+        errprint("If you have registered before, please retry with -r or --retrieve-mode.")
         sys.exit(1)
     #endtry
 #endif

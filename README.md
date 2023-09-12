@@ -11,7 +11,7 @@ changes since it was written).
 ## Dependencies
 
 ```
-python3 -m pip install pycryptodome requests
+python3 -m pip install -r requirements.txt
 ```
 
 Note: Requires a version of pycryptodome that supports AES in CCM mode.
