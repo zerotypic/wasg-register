@@ -1,6 +1,23 @@
 wasg-register : Registers for a new Wireless@SG SSA account
 ===========================================================
 
+# NOTE: DEPRECATED!
+
+IMDA has recently introduced a new method for connecting to Wireless@SGx,
+which can be done via a website on non-Windows/Mac machines. Harish Pillay
+has provided a [writeup](https://harishpillay.com/2025/01/20/wirelesssgx-for-linux-2025-update/)
+documenting the exact details. With this method, the `wasg-register` script
+provided here is no longer needed, and thus I won't be updating it anymore.
+Discussion about this can also be found at https://github.com/zerotypic/wasg-register/issues/34;
+thanks [@sunnykoh](https://github.com/sunnykoh) for bringing this to our attention.
+
+tldr:
+1. Go to https://eservice.imda.gov.sg/wirelessSGx/
+2. Click "Device without local SIM", "Android/ChromeOS & Other Operating Systems", "Create Profile"
+3. Enter details to obtain required creds
+
+# OLD DOCUMENTATION BELOW
+
 wasg-register.py is a Python implementation of the Wireless@SG SSA
 registration protocol.
 
